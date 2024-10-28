@@ -15,12 +15,17 @@ import {
   restProducts,
 } from "../../database/db";
 import Icon from "react-native-vector-icons/Ionicons";
-
+import AddProductModal from "../../components/AddProductModal";
 const ProductListScreen = () => {
   const [products, setProducts] = useState([]);
   const [newProductName, setNewProductName] = useState("");
   const [newProductPrice, setNewProductPrice] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
 
+  const handleAddProduct = () => {
+    setModalVisible(false);
+    addProduct(); // Esta es tu función para agregar el producto.
+  };
   useEffect(() => {
     loadProducts();
   }, []);
@@ -95,13 +100,21 @@ const ProductListScreen = () => {
   };
 
   const deleteProduct = (id) => {
-    markProductAsDeleted(id);
-    loadProducts();
+    markProductAsDeleted(id); // Marca el producto como eliminado en la base de datos
+    setProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product.id === id ? { ...product, state: "deleted" } : product,
+      ),
+    );
   };
 
-  const restoreProduct = async (id) => {
-    await restProducts(id);
-    loadProducts(); // Recargar productos después de restaurar
+  const restoreProduct = (id) => {
+    restProducts(id); // Llama a la función para restaurar en la base de datos
+    setProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product.id === id ? { ...product, state: "active" } : product,
+      ),
+    );
   };
 
   const renderItem = (item) => {
@@ -129,9 +142,9 @@ const ProductListScreen = () => {
             <TextInput
               style={styles.input}
               keyboardType="numeric"
-              value={item.estimatedPrice ? item.estimatedPrice.toString() : "0"}
-              onChangeText={(text) => updateEstimatedPrice(item.id, text)}
-              placeholder="Precio Estimado"
+              value={item.price ? item.price.toString() : "0"}
+              onChangeText={(text) => updatePrice(item.id, text)}
+              placeholder="Precio"
               editable={!isDeleted}
             />
           </View>
@@ -140,9 +153,9 @@ const ProductListScreen = () => {
             <TextInput
               style={styles.input}
               keyboardType="numeric"
-              value={item.price ? item.price.toString() : "0"}
-              onChangeText={(text) => updatePrice(item.id, text)}
-              placeholder="Precio"
+              value={item.estimatedPrice ? item.estimatedPrice.toString() : "0"}
+              onChangeText={(text) => updateEstimatedPrice(item.id, text)}
+              placeholder="Precio Estimado"
               editable={!isDeleted}
             />
           </View>
@@ -172,28 +185,32 @@ const ProductListScreen = () => {
       <ScrollView contentContainerStyle={styles.list}>
         {products.map((product) => renderItem(product))}
       </ScrollView>
-      <View style={styles.newProductContainer}>
-        <TextInput
-          style={styles.newInput}
-          placeholder="Nombre del producto"
-          value={newProductName}
-          onChangeText={setNewProductName}
-        />
-        <TextInput
-          style={styles.newInput}
-          keyboardType="numeric"
-          placeholder="Precio"
-          value={newProductPrice}
-          onChangeText={setNewProductPrice}
-        />
-        <Button title="Agregar Producto" onPress={addProduct} color="#006D77" />
+      <View style={styles.addButton}>
+        <TouchableOpacity style={styles.addButtonContainer}>
+          <Icon
+            name="add-circle-outline"
+            size={25}
+            color="#FFFFFF"
+            onPress={() => setModalVisible(true)}
+          />
+        </TouchableOpacity>
       </View>
+      <AddProductModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onAddProduct={handleAddProduct}
+        newProductName={newProductName}
+        setNewProductName={setNewProductName}
+        newProductPrice={newProductPrice}
+        setNewProductPrice={setNewProductPrice}
+      />
+
       <View style={styles.totalContainer}>
         <Text style={styles.totalText}>
-          Costo Total Estimado: ${totalEstimatedCost.toFixed(2)}
+          Costo Total : ${totalCost.toFixed(2)}
         </Text>
         <Text style={styles.totalText}>
-          Costo Total: ${totalCost.toFixed(2)}
+          Costo Total Estimado: ${totalEstimatedCost.toFixed(2)}
         </Text>
       </View>
     </View>
@@ -204,7 +221,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#121212",
-    padding: 20,
+    padding: 25,
     paddingBottom: 80,
   },
   list: {
@@ -213,8 +230,8 @@ const styles = StyleSheet.create({
   item: {
     backgroundColor: "#2E2E2E",
     borderRadius: 10,
-    padding: 10,
-    marginVertical: 5,
+    padding: 7,
+    marginVertical: 10,
     elevation: 3,
   },
   name: {
@@ -224,10 +241,10 @@ const styles = StyleSheet.create({
   },
   deletedName: {
     textDecorationLine: "line-through",
-    color: "#B0B0B0", // Color para nombre eliminado
+    color: "red", // Color para nombre eliminado
   },
   input: {
-    width: 60,
+    width: 52,
     backgroundColor: "#3C3C3C",
     color: "#FFFFFF",
     borderRadius: 5,
@@ -239,18 +256,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 5,
+    marginTop: 2,
   },
   totalContainer: {
     marginTop: 20,
-    padding: 10,
+    padding: 5,
     backgroundColor: "#006D77",
     borderRadius: 10,
     alignItems: "center",
   },
   totalText: {
     color: "#FFFFFF",
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: "bold",
     marginVertical: 5,
   },
@@ -264,14 +281,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#3C3C3C",
     color: "#FFFFFF",
     borderRadius: 5,
-    padding: 3,
-    marginHorizontal: 5,
+    padding: 0,
+    marginHorizontal: 3,
   },
   deleteIcon: {
     marginLeft: 5,
   },
   restoreButton: {
-    backgroundColor: "#28A745",
+    backgroundColor: "#006D77",
     borderRadius: 5,
     padding: 3,
     flexDirection: "row",
@@ -282,6 +299,23 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "bold",
     marginLeft: 5,
+  },
+  addButton: {
+    bottom: 0,
+    right: 0,
+  },
+  addButtonContainer: {
+    backgroundColor: "#006D77",
+    borderRadius: 10,
+    elevation: 3,
+    width: 50,
+    height: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
   },
 });
 

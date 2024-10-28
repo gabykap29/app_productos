@@ -1,40 +1,50 @@
 import { TouchableHighlight, Text, StyleSheet, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient"; // Asegúrate de tener expo-linear-gradient instalada
 
 const Button = ({ title, onPress }) => {
   return (
     <TouchableHighlight
-      style={styles.button}
+      style={styles.buttonContainer}
       onPress={onPress}
-      underlayColor="#004d4d" // Color al presionar
+      underlayColor="#004d4d"
     >
-      <Text style={styles.buttonText}>{title}</Text>
+      <LinearGradient
+        colors={["#006D77", "#008080"]} // Gradiente de color
+        style={styles.button}
+      >
+        <Text style={styles.buttonText}>{title}</Text>
+      </LinearGradient>
     </TouchableHighlight>
   );
 };
 
 const styles = StyleSheet.create({
+  buttonContainer: {
+    borderRadius: 30,
+    overflow: "hidden", // Hace que el gradiente siga la forma del botón
+    marginBottom: 20,
+  },
   button: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#006D77",
-    borderRadius: 25,
-    width: 200,
-    height: 50,
+    borderRadius: 30,
+    width: 220,
+    height: 55,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 5, // Sombra en Android
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 7,
+    borderWidth: 1,
+    borderColor: "#004d4d",
     paddingHorizontal: 20,
-    marginBottom: 20,
-    borderWidth: 1, // Borde adicional
-    borderColor: "#004d4d", // Color del borde
   },
   buttonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
-    textTransform: "uppercase", // Texto en mayúsculas
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
 });
 
