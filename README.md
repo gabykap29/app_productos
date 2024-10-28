@@ -39,7 +39,8 @@ npm install
 ## 📱 Instalación de Builds
 
 ### Android
-- Descarga el archivo pre-build de Android desde el [repositorio](https://github.com/gabykap29/app_productos/tree/main/android) 
+- Descarga el archivo pre-build de Android desde el [repositorio](https://expo.dev/accounts/gabykap/projects/app-nany/builds/5dd4a81d-f17a-469c-94ea-46a89d7c1361
+) 
 
 ### iOS
-- Descarga el archivo pre-build de iOS desde el [repositorio](https://github.com/gabykap29/app_productos/tree/main/ios)
+- Descarga el archivo pre-build de iOS desde el [repositorio](https://github.com/gabykap29/app_productos/tree/main/ios) aún no disponible.
