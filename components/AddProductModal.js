@@ -16,6 +16,10 @@ const AddProductModal = ({
   setNewProductName,
   newProductPrice,
   setNewProductPrice,
+  newProductQuantity, // Nuevo prop para la cantidad
+  setNewProductQuantity, // Función para establecer la cantidad
+  newEstimatedPrice, // Nuevo prop para el precio estimado
+  setNewEstimatedPrice, // Función para establecer el precio estimado
 }) => {
   return (
     <Modal
@@ -39,8 +43,16 @@ const AddProductModal = ({
             placeholder="Precio Estimado"
             placeholderTextColor="#AAAAAA"
             keyboardType="numeric"
-            value={newProductPrice}
-            onChangeText={setNewProductPrice}
+            value={newEstimatedPrice} // Usar el nuevo prop
+            onChangeText={setNewEstimatedPrice} // Usar la función para establecer el precio estimado
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Cantidad"
+            placeholderTextColor="#AAAAAA"
+            keyboardType="numeric"
+            value={newProductQuantity} // Usar el nuevo prop
+            onChangeText={setNewProductQuantity} // Usar la función para establecer la cantidad
           />
           <View style={styles.buttonContainer}>
             <TouchableOpacity onPress={onAddProduct} style={styles.addButton}>
@@ -96,14 +108,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
   },
-
   closeButtonText: {
     color: "#ffffff",
     fontSize: 14,
     textAlign: "center",
   },
   addButton: {
-    backgroundColor: "#006D77",
+    backgroundColor: "#006D77", // Cambié a un color azul más común para botones
     borderRadius: 5,
     paddingVertical: 10,
     paddingHorizontal: 20,

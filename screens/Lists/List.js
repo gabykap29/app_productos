@@ -4,118 +4,135 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
 } from "react-native";
 import Button from "../../components/Button";
 import {
-  inserProduct,
+  insertProduct,
   getProducts,
   markProductAsDeleted,
   restProducts,
+  updateProduct,
 } from "../../database/db";
 import Icon from "react-native-vector-icons/Ionicons";
 import AddProductModal from "../../components/AddProductModal";
+import EditProductModal from "../../components/EditProductModal";
+
 const ProductListScreen = () => {
   const [products, setProducts] = useState([]);
   const [newProductName, setNewProductName] = useState("");
   const [newProductPrice, setNewProductPrice] = useState("");
-  const [modalVisible, setModalVisible] = useState(false);
+  const [newProductQuantity, setNewProductQuantity] = useState("");
+  const [newEstimatedPrice, setNewEstimatedPrice] = useState("");
+  const [addModalVisible, setAddModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
 
-  const handleAddProduct = () => {
-    setModalVisible(false);
-    addProduct(); // Esta es tu función para agregar el producto.
-  };
   useEffect(() => {
     loadProducts();
   }, []);
 
   const loadProducts = async () => {
-    getProducts((productsFromDB) => {
-      setProducts(Array.isArray(productsFromDB) ? productsFromDB : []);
+    try {
+      getProducts((productsFromDB) => {
+        setProducts(Array.isArray(productsFromDB) ? productsFromDB : []);
+      });
+    } catch (error) {
+      console.error("Error loading products:", error);
+    }
+  };
+
+  const handleAddProduct = () => {
+    setAddModalVisible(false);
+    addProduct();
+  };
+
+  const addProduct = () => {
+    console.log("Valores de producto antes de la validación:", {
+      newProductName,
+      newProductPrice,
+      newProductQuantity,
+      newEstimatedPrice,
     });
+    insertProduct(
+      newProductName,
+      parseFloat(newProductPrice) || 0,
+      parseFloat(newProductQuantity) || 0,
+      parseFloat(newEstimatedPrice) || 0,
+      "active",
+    )
+      .then(() => {
+        console.log("Producto añadido, recargando productos...");
+        loadProducts();
+      })
+      .catch((error) => {
+        console.error("Error al añadir producto:", error);
+      });
+
+    resetAddModalFields();
+    return true; // Indica que el producto fue añadido correctamente
+  };
+
+  const resetAddModalFields = () => {
+    setNewProductName("");
+    setNewProductPrice("");
+    setNewProductQuantity("");
+    setNewEstimatedPrice("");
+  };
+
+  const deleteProduct = (id) => {
+    markProductAsDeleted(id);
+    updateProductState(id, "deleted");
+  };
+
+  const restoreProductItem = (id) => {
+    restProducts(id);
+    updateProductState(id, "active");
+  };
+
+  const updateProductState = (id, newState) => {
+    setProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product.id === id ? { ...product, state: newState } : product,
+      ),
+    );
+  };
+
+  const startEditing = (product) => {
+    setEditingProduct(product);
+    setEditModalVisible(true);
+  };
+
+  const handleEditProduct = () => {
+    if (editingProduct) {
+      updateProduct(
+        editingProduct.id,
+        editingProduct.name,
+        editingProduct.price,
+        editingProduct.quantity,
+        editingProduct.estimatedPrice,
+      )
+        .then(() => {
+          setEditingProduct(null);
+          setEditModalVisible(false);
+        })
+        .catch((error) => {
+          console.error("Error al editar producto:", error);
+        });
+    }
+    loadProducts();
   };
 
   const totalEstimatedCost = products.reduce(
-    (sum, product) => sum + (product.estimatedPrice || 0),
+    (sum, product) =>
+      sum + (product.estimatedPrice || 0) * (product.quantity || 0),
     0,
   );
 
   const totalCost = products.reduce(
-    (sum, product) => sum + product.price * product.quantity,
+    (sum, product) => sum + (product.price || 0) * (product.quantity || 0),
     0,
   );
-
-  const updatePrice = (id, newPrice) => {
-    setProducts((prevProducts) =>
-      prevProducts.map((product) =>
-        product.id === id
-          ? { ...product, price: parseFloat(newPrice) || 0 }
-          : product,
-      ),
-    );
-  };
-
-  const updateQuantity = (id, newQuantity) => {
-    setProducts((prevProducts) =>
-      prevProducts.map((product) =>
-        product.id === id
-          ? { ...product, quantity: Math.max(0, parseInt(newQuantity) || 0) }
-          : product,
-      ),
-    );
-  };
-
-  const updateEstimatedPrice = (id, newEstimatedPrice) => {
-    setProducts((prevProducts) =>
-      prevProducts.map((product) =>
-        product.id === id
-          ? { ...product, estimatedPrice: parseFloat(newEstimatedPrice) || 0 }
-          : product,
-      ),
-    );
-  };
-
-  const addProduct = () => {
-    if (newProductName && newProductPrice) {
-      const newProduct = {
-        id: Math.random().toString(),
-        name: newProductName,
-        price: parseFloat(newProductPrice) || 0,
-        quantity: 0,
-        estimatedPrice: 0,
-        state: "active", // Añadir estado aquí
-      };
-      inserProduct(
-        newProduct.name,
-        newProduct.price,
-        newProduct.quantity,
-        newProduct.estimatedPrice,
-        newProduct.state,
-      );
-      loadProducts();
-      setNewProductName("");
-      setNewProductPrice("");
-    }
-  };
-
-  const deleteProduct = (id) => {
-    markProductAsDeleted(id); // Marca el producto como eliminado en la base de datos
-    setProducts((prevProducts) =>
-      prevProducts.map((product) =>
-        product.id === id ? { ...product, state: "deleted" } : product,
-      ),
-    );
-  };
-
-  const restoreProduct = (id) => {
-    restProducts(id); // Llama a la función para restaurar en la base de datos
-    setProducts((prevProducts) =>
-      prevProducts.map((product) =>
-        product.id === id ? { ...product, state: "active" } : product,
-      ),
-    );
-  };
 
   const renderItem = (item) => {
     const isDeleted = item.state === "deleted";
@@ -126,39 +143,20 @@ const ProductListScreen = () => {
           {item.name}
         </Text>
         <View style={styles.quantityContainer}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Cantidad</Text>
-            <TextInput
-              style={styles.input}
-              keyboardType="numeric"
-              value={item.quantity ? item.quantity.toString() : "0"}
-              onChangeText={(text) => updateQuantity(item.id, text)}
-              placeholder="Cantidad"
-              editable={!isDeleted} // Habilitar solo si no está eliminado
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Precio Estimado</Text>
-            <TextInput
-              style={styles.input}
-              keyboardType="numeric"
-              value={item.price ? item.price.toString() : "0"}
-              onChangeText={(text) => updatePrice(item.id, text)}
-              placeholder="Precio"
-              editable={!isDeleted}
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Precio</Text>
-            <TextInput
-              style={styles.input}
-              keyboardType="numeric"
-              value={item.estimatedPrice ? item.estimatedPrice.toString() : "0"}
-              onChangeText={(text) => updateEstimatedPrice(item.id, text)}
-              placeholder="Precio Estimado"
-              editable={!isDeleted}
-            />
-          </View>
+          {["quantity", "price", "estimatedPrice"].map((field) => (
+            <View style={styles.inputGroup} key={field}>
+              <Text style={styles.inputLabel}>
+                {field === "quantity"
+                  ? "Cantidad"
+                  : field === "price"
+                    ? "Precio"
+                    : "Precio Estimado"}
+              </Text>
+              <Text style={styles.inputValue}>
+                {item[field]?.toString() || "0"}
+              </Text>
+            </View>
+          ))}
           <Icon
             name="trash-bin-outline"
             size={25}
@@ -166,10 +164,17 @@ const ProductListScreen = () => {
             onPress={() => deleteProduct(item.id)}
             style={styles.deleteIcon}
           />
+          <Icon
+            name="pencil-outline"
+            size={25}
+            color="#FFC107"
+            onPress={() => startEditing(item)}
+            style={styles.editIcon}
+          />
         </View>
         {isDeleted && (
           <TouchableOpacity
-            onPress={() => restoreProduct(item.id)}
+            onPress={() => restoreProductItem(item.id)}
             style={styles.restoreButton}
           >
             <Icon name="arrow-undo-outline" size={20} color="#FFFFFF" />
@@ -186,31 +191,45 @@ const ProductListScreen = () => {
         {products.map((product) => renderItem(product))}
       </ScrollView>
       <View style={styles.addButton}>
-        <TouchableOpacity style={styles.addButtonContainer}>
-          <Icon
-            name="add-circle-outline"
-            size={25}
-            color="#FFFFFF"
-            onPress={() => setModalVisible(true)}
-          />
+        <TouchableOpacity
+          style={styles.addButtonContainer}
+          onPress={() => {
+            setAddModalVisible(true);
+            resetAddModalFields(); // Limpiar campos del modal de agregar
+          }}
+        >
+          <Icon name="add-circle-outline" size={25} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
       <AddProductModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
+        visible={addModalVisible}
+        onClose={() => setAddModalVisible(false)}
         onAddProduct={handleAddProduct}
         newProductName={newProductName}
         setNewProductName={setNewProductName}
         newProductPrice={newProductPrice}
         setNewProductPrice={setNewProductPrice}
+        newProductQuantity={newProductQuantity}
+        setNewProductQuantity={setNewProductQuantity}
+        newEstimatedPrice={newEstimatedPrice}
+        setNewEstimatedPrice={setNewEstimatedPrice}
       />
-
+      <EditProductModal
+        visible={editModalVisible}
+        onClose={() => setEditModalVisible(false)}
+        onEditProduct={handleEditProduct}
+        product={editingProduct}
+        setProduct={setEditingProduct}
+      />
       <View style={styles.totalContainer}>
         <Text style={styles.totalText}>
-          Costo Total : ${totalCost.toFixed(2)}
+          Costo Total : ${totalCost?.toFixed(2) || 0}
         </Text>
         <Text style={styles.totalText}>
-          Costo Total Estimado: ${totalEstimatedCost.toFixed(2)}
+          Costo Total Estimado: $
+          {typeof totalEstimatedCost === "number"
+            ? totalEstimatedCost.toFixed(2)
+            : parseFloat(totalEstimatedCost || 0).toFixed(2)}
         </Text>
       </View>
     </View>
@@ -241,81 +260,64 @@ const styles = StyleSheet.create({
   },
   deletedName: {
     textDecorationLine: "line-through",
-    color: "red", // Color para nombre eliminado
+    color: "red",
   },
-  input: {
+  inputValue: {
     width: 52,
     backgroundColor: "#3C3C3C",
     color: "#FFFFFF",
     borderRadius: 5,
     padding: 5,
-    textAlign: "center",
-    marginHorizontal: 5,
+    textAlign: "center", // Centrar el texto en el campo
   },
   quantityContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 2,
+    marginBottom: 5,
   },
-  totalContainer: {
-    marginTop: 20,
-    padding: 5,
-    backgroundColor: "#006D77",
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  totalText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "bold",
-    marginVertical: 5,
-  },
-  newProductContainer: {
-    marginTop: 20,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  newInput: {
+  inputGroup: {
     flex: 1,
-    backgroundColor: "#3C3C3C",
+    marginHorizontal: 5,
+  },
+  inputLabel: {
     color: "#FFFFFF",
-    borderRadius: 5,
-    padding: 0,
-    marginHorizontal: 3,
+    marginBottom: 3,
+    textAlign: "center",
   },
   deleteIcon: {
-    marginLeft: 5,
+    marginLeft: 10,
+  },
+  editIcon: {
+    marginLeft: 10,
   },
   restoreButton: {
-    backgroundColor: "#006D77",
+    marginTop: 5,
+    backgroundColor: "#4CAF50",
     borderRadius: 5,
-    padding: 3,
+    padding: 5,
     flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
-    marginTop: 10,
   },
   restoreButtonText: {
     color: "#FFFFFF",
-    fontWeight: "bold",
     marginLeft: 5,
-  },
-  addButton: {
-    bottom: 0,
-    right: 0,
   },
   addButtonContainer: {
     backgroundColor: "#006D77",
+    borderRadius: 50,
+    padding: 15,
+  },
+  totalContainer: {
+    marginTop: 20,
+    backgroundColor: "#2E2E2E",
     borderRadius: 10,
-    elevation: 3,
-    width: 50,
-    height: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
+    padding: 10,
+  },
+  totalText: {
+    color: "#FFFFFF",
+    fontSize: 16,
   },
 });
 
