@@ -125,12 +125,17 @@ const ProductListScreen = () => {
 
   const totalEstimatedCost = products.reduce(
     (sum, product) =>
-      sum + (product.estimatedPrice || 0) * (product.quantity || 0),
+      product.state !== "deleted" // Solo sumar productos no eliminados
+        ? sum + (product.estimatedPrice || 0) * (product.quantity || 0)
+        : sum,
     0,
   );
 
   const totalCost = products.reduce(
-    (sum, product) => sum + (product.price || 0) * (product.quantity || 0),
+    (sum, product) =>
+      product.state !== "deleted" // Solo sumar productos no eliminados
+        ? sum + (product.price || 0) * (product.quantity || 0)
+        : sum,
     0,
   );
 
