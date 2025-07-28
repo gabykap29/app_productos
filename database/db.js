@@ -7,13 +7,14 @@ const createTable = async () => {
   try {
     (await db).execAsync(
       `CREATE TABLE IF NOT EXISTS products (
-         id INTEGER PRIMARY KEY AUTOINCREMENT,
-         name TEXT,
-         price REAL,
-         quantity INTEGER,
-         estimatedPrice REAL,
-         state TEXT
-       )`,
+                                               id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                               name TEXT,
+                                               price REAL,
+                                               quantity INTEGER,
+                                               estimatedPrice REAL,
+                                               state TEXT,
+                                               label TEXT
+         )`,
     );
     console.log("Tabla creada o ya existe");
   } catch (error) {
@@ -31,13 +32,24 @@ const insertProduct = async (
   quantity,
   estimatedPrice,
   state,
+  label,
 ) => {
   try {
-    (await db).runAsync(
-      "INSERT INTO products (name, price, quantity, estimatedPrice, state) VALUES (?, ?, ?, ?, ?)",
-      [name, price, quantity, estimatedPrice, state],
+    await (
+      await db
+    ).runAsync(
+      "INSERT INTO products (name, price, quantity, estimatedPrice, state, label) VALUES (?, ?, ?, ?, ?, ?)",
+      [name, price, quantity, estimatedPrice, state, label],
     );
-    console.log("Producto insertado");
+    console.log(
+      "Producto insertado",
+      name,
+      price,
+      quantity,
+      estimatedPrice,
+      state,
+      label,
+    );
   } catch (error) {
     console.error("Error insertando producto:", error);
   }
@@ -51,7 +63,7 @@ const getProducts = async (callback) => {
     const products = rows.map((product) => ({
       ...product,
       price: product.price ? parseFloat(product.price).toFixed(2) : "0.00",
-      quantity: product.quantity || 0, // Asegurarse de que quantity sea un número
+      quantity: product.quantity || 0,
       estimatedPrice: product.estimatedPrice
         ? parseFloat(product.estimatedPrice).toFixed(2)
         : "0.00",
@@ -85,19 +97,39 @@ const markProductAsDeleted = async (id) => {
   }
 };
 
-const updateProduct = async (id, name, price, quantity, estimatedPrice) => {
+const updateProduct = async (
+  id,
+  name,
+  price,
+  quantity,
+  estimatedPrice,
+  label,
+) => {
   try {
     await (
       await db
     ).runAsync(
-      "UPDATE products SET name = ?, price = ?, quantity = ?, estimatedPrice = ? WHERE id = ?",
-      [name, price, quantity, estimatedPrice, id],
+      "UPDATE products SET name = ?, price = ?, quantity = ?, estimatedPrice = ?, label = ? WHERE id = ?",
+      [name, price, quantity, estimatedPrice, label, id],
     );
-    console.log("Producto actualizado con los datos: ", id, name, price),
+    console.log(
+      "Producto actualizado con los datos: ",
+      id,
+      name,
+      price,
       quantity,
-      estimatedPrice;
+      estimatedPrice,
+    );
   } catch (error) {
     console.error("Error actualizando producto:", error);
+  }
+};
+
+const deleteAllProducts = async () => {
+  try {
+    await (await db).runAsync("DELETE FROM products");
+  } catch (error) {
+    console.error("Error al eliminar los productos! ", error);
   }
 };
 
@@ -107,4 +139,5 @@ export {
   markProductAsDeleted,
   restProducts,
   updateProduct,
+  deleteAllProducts,
 };

@@ -7,101 +7,106 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
+import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
 
 const EditProductModal = ({
-  visible,
-  onClose,
-  onEditProduct,
-  product,
-  setProduct,
-}) => {
+                            visible,
+                            onClose,
+                            onEditProduct,
+                            product,
+                            setProduct,
+                          }) => {
   const handleChange = (field, value) => {
     setProduct({ ...product, [field]: value });
   };
 
-  const handlePriceChange = (text) => {
-    // Permitir cualquier texto y solo convertir a float en el submit
-    handleChange("price", text);
-  };
-
-  const handleEstimatedPriceChange = (text) => {
-    // Permitir cualquier texto y solo convertir a float en el submit
-    handleChange("estimatedPrice", text);
-  };
+  const handlePriceChange = (text) => handleChange("price", text);
+  const handleEstimatedPriceChange = (text) => handleChange("estimatedPrice", text);
 
   return (
-    <Modal
-      transparent={true}
-      visible={visible}
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalBackground}>
-        <View style={styles.modalContainer}>
-          <Text style={styles.title}>Editar Producto</Text>
+      <Modal
+          transparent={true}
+          visible={visible}
+          animationType="slide"
+          onRequestClose={onClose}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.title}>Editar Producto</Text>
 
-          <Text style={styles.label}>Nombre</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Nombre"
-            value={product?.name}
-            onChangeText={(text) => handleChange("name", text)}
-          />
+            <View style={styles.inputGroup}>
+              <FontAwesome5 name="tag" size={16} color="#FFF" style={styles.icon} />
+              <TextInput
+                  style={styles.input}
+                  placeholder="Nombre"
+                  placeholderTextColor="#AAA"
+                  value={product?.name}
+                  onChangeText={(text) => handleChange("name", text)}
+              />
+            </View>
 
-          <Text style={styles.label}>Precio</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Precio"
-            keyboardType="decimal-pad"
-            value={product?.price} // Mantenerlo como texto
-            onChangeText={handlePriceChange} // Usando la nueva función para manejar cambios
-          />
+            <View style={styles.inputGroup}>
+              <FontAwesome5 name="dollar-sign" size={16} color="#FFF" style={styles.icon} />
+              <TextInput
+                  style={styles.input}
+                  placeholder="Precio"
+                  placeholderTextColor="#AAA"
+                  keyboardType="decimal-pad"
+                  value={product?.price}
+                  onChangeText={handlePriceChange}
+              />
+            </View>
 
-          <Text style={styles.label}>Cantidad</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Cantidad"
-            keyboardType="numeric"
-            value={product?.quantity?.toString()}
-            onChangeText={(text) =>
-              handleChange("quantity", parseInt(text) || 0)
-            }
-          />
+            <View style={styles.inputGroup}>
+              <MaterialIcons name="format-list-numbered" size={20} color="#FFF" style={styles.icon} />
+              <TextInput
+                  style={styles.input}
+                  placeholder="Cantidad"
+                  placeholderTextColor="#AAA"
+                  keyboardType="numeric"
+                  value={product?.quantity?.toString()}
+                  onChangeText={(text) =>
+                      handleChange("quantity", parseInt(text) || 0)
+                  }
+              />
+            </View>
 
-          <Text style={styles.label}>Precio Estimado</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Precio Estimado"
-            keyboardType="decimal-pad"
-            value={product?.estimatedPrice} // Mantenerlo como texto
-            onChangeText={handleEstimatedPriceChange} // Usando la nueva función para manejar cambios
-          />
+            <View style={styles.inputGroup}>
+              <FontAwesome5 name="calculator" size={16} color="#FFF" style={styles.icon} />
+              <TextInput
+                  style={styles.input}
+                  placeholder="Precio Estimado"
+                  placeholderTextColor="#AAA"
+                  keyboardType="decimal-pad"
+                  value={product?.estimatedPrice}
+                  onChangeText={handleEstimatedPriceChange}
+              />
+            </View>
 
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => {
-              // Convertir a float solo en el submit
-              const priceFloat = parseFloat(product.price) || 0;
-              const estimatedPriceFloat =
-                parseFloat(product.estimatedPrice) || 0;
-              onEditProduct({
-                ...product,
-                price: priceFloat,
-                estimatedPrice: estimatedPriceFloat,
-              });
-            }}
-          >
-            <Text style={styles.buttonText}>Guardar Cambios</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, styles.cancelButton]}
-            onPress={onClose}
-          >
-            <Text style={styles.buttonText}>Cancelar</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.button}
+                onPress={() => {
+                  const priceFloat = parseFloat(product.price) || 0;
+                  const estimatedPriceFloat = parseFloat(product.estimatedPrice) || 0;
+                  onEditProduct({
+                    ...product,
+                    price: priceFloat,
+                    estimatedPrice: estimatedPriceFloat,
+                  });
+                }}
+            >
+              <Text style={styles.buttonText}>Guardar Cambios</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={onClose}
+            >
+              <Text style={styles.buttonText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
   );
 };
 
@@ -110,46 +115,51 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
   },
   modalContainer: {
-    width: "80%",
+    width: "85%",
     backgroundColor: "#2E2E2E",
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 20,
-    alignItems: "center",
+    elevation: 10,
   },
   title: {
     color: "#FFFFFF",
-    fontSize: 18,
+    fontSize: 20,
+    marginBottom: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  inputGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#3C3C3C",
+    borderRadius: 8,
+    paddingHorizontal: 10,
     marginBottom: 15,
   },
-  label: {
-    color: "#FFFFFF",
-    alignSelf: "flex-start",
-    marginBottom: 5,
+  icon: {
+    marginRight: 8,
   },
   input: {
-    width: "100%",
-    backgroundColor: "#3C3C3C",
+    flex: 1,
     color: "#FFFFFF",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
+    height: 45,
   },
   button: {
     backgroundColor: "#006D77",
-    borderRadius: 5,
-    padding: 10,
+    borderRadius: 8,
+    padding: 12,
     alignItems: "center",
-    width: "100%",
+    marginTop: 10,
   },
   cancelButton: {
     backgroundColor: "#D9534F",
-    marginTop: 10,
   },
   buttonText: {
     color: "#FFFFFF",
+    fontWeight: "600",
   },
 });
 
